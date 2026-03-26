@@ -1,6 +1,6 @@
-import time
+import asyncio
+import websockets
 import random
-import requests
 
 URL = "wss://treesitetorricellirelay.onrender.com/ws/client"
 
@@ -8,13 +8,18 @@ URL = "wss://treesitetorricellirelay.onrender.com/ws/client"
 MIN_DELAY = 300
 MAX_DELAY = 600
 
-while True:
-    try:
-        r = requests.get(URL, timeout=10)
-        print(f"[OK] Status: {r.status_code}")
-    except Exception as e:
-        print(f"[ERRORE] {e}")
+async def keep_alive():
+    while True:
+        try:
+            async with websockets.connect(URL) as ws:
+                # invia un messaggio minimo per tenere viva la connessione
+                await ws.send("ping")
+                print("[OK] Connessione attiva, ping inviato")
+        except Exception as e:
+            print(f"[ERRORE] Connessione persa: {e}")
 
-    delay = random.randint(MIN_DELAY, MAX_DELAY)
-    print(f"Prossima richiesta tra {delay} secondi")
-    time.sleep(delay)
+        delay = random.randint(MIN_DELAY, MAX_DELAY)
+        print(f"Prossima connessione tra {delay} secondi")
+        await asyncio.sleep(delay)
+
+asyncio.run(keep_alive())
