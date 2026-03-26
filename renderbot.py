@@ -2,7 +2,7 @@ import time
 import random
 import requests
 
-URL = "https://tuo-server.onrender.com"  # cambia con il tuo
+URL = "wss://treesitetorricellirelay.onrender.com/ws/client"
 
 # intervallo: tra 5 e 10 minuti (sempre sotto i 15)
 MIN_DELAY = 300
