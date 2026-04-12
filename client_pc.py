@@ -11,6 +11,41 @@ MODEL = "llama3.2:3b"
 
 stemmer = ItalianStemmer()
 
+BOT_IDENTITY = """
+Ti chiami Vivo.
+Sei l'albero della 4B Info del Torricelli di Milano.
+Parli in italiano.
+Rispondi solo usando le informazioni presenti nel testo fornito.
+Se la risposta non è presente nel testo, scrivi esattamente: "Non ho informazioni sufficienti".
+"""
+
+BOT_RULES = """
+Regole:
+- Rispondi in modo chiaro, naturale e coerente con la domanda.
+- Se la domanda è semplice, rispondi in modo breve.
+- Se la domanda richiede più dettagli, puoi rispondere in modo più esteso.
+- Riformula con parole tue.
+- Non copiare frasi intere dal testo, salvo casi strettamente necessari.
+- Non includere parti non rilevanti.
+- Non inventare informazioni.
+- Non aggiungere conoscenze esterne.
+- Evita errori ortografici e usa un italiano corretto.
+"""
+
+def build_prompt(context, question):
+    return f"""
+{BOT_IDENTITY}
+
+{BOT_RULES}
+
+Testo:
+{context}
+
+Domanda: {question}
+
+Risposta:
+"""
+
 def normalize(text):
     text = text.lower()
     text = re.sub(r"[^a-zàèéìòùç ]", " ", text)
@@ -70,26 +105,7 @@ async def main():
                             response = "Non ho informazioni sufficienti nel sito."
                         else:
                             context = "\n\n".join(found)
-                            full_prompt = f"""
-Rispondi solo usando le informazioni presenti nel testo seguente.
-Se la risposta non è presente, di': "Non ho informazioni sufficienti".
-
-Regole:
-- Rispondi in modo breve (massimo 3 frasi).
-- Riformula con parole tue.
-- Non copiare frasi intere dal testo.
-- Non includere parti non rilevanti.
-- Non aggiungere nulla che non sia nel testo.
-- Evita errori ortografici e usa parole italiane corrette.
-
-Testo:
-{context}
-
-Domanda: {prompt}
-
-Risposta sintetica:
-"""
-
+                            full_prompt = build_prompt(context, prompt)
                             response = ask_ollama(full_prompt)
 
                         await ws.send(json.dumps({
