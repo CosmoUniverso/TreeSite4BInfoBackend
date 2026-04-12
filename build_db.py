@@ -5,7 +5,8 @@ import textwrap
 
 URLS = [
     "https://cosmouniverso.github.io/TreeSite4BInfoSite/",
-    "https://cosmouniverso.github.io/TreeSite4BInfoSite/alberi.html"
+    "https://cosmouniverso.github.io/TreeSite4BInfoSite/alberi.html",
+    https://cosmouniverso.github.io/TreeSite4BInfoSite/info
 ]
 
 
