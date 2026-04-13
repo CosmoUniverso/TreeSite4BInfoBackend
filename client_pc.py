@@ -91,6 +91,10 @@ def normalize(text):
     return stems
 
 
+def remove_ansi_escape_sequences(text):
+    ansi_escape = re.compile(r'\x1B[@-_][0-?]*[ -/]*[@-~]')
+    return ansi_escape.sub('', text)
+
 def ask_ollama(prompt):
     result = subprocess.run(
         ["ollama", "run", MODEL],
@@ -101,12 +105,15 @@ def ask_ollama(prompt):
 
     if result.returncode != 0:
         err = result.stderr.decode("utf-8", errors="ignore").strip()
+        err = remove_ansi_escape_sequences(err)
         return f"Errore nella generazione della risposta: {err or 'comando fallito'}"
 
     output = result.stdout.decode("utf-8", errors="ignore").strip()
+    output = remove_ansi_escape_sequences(output)
 
     if not output:
         err = result.stderr.decode("utf-8", errors="ignore").strip()
+        err = remove_ansi_escape_sequences(err)
         return f"Errore nella generazione della risposta: {err or 'output vuoto'}"
 
     return output
