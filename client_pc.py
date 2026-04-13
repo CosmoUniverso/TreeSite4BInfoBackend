@@ -6,6 +6,8 @@ import subprocess
 import re
 import urllib.request
 import urllib.error
+import time
+import platform
 from nltk.stem.snowball import ItalianStemmer
 
 SERVER_URL = "wss://treesitetorricellirelay.onrender.com/ws/client"
@@ -13,6 +15,8 @@ MODEL = "llama3.2:3b"
 
 LATITUDE = 45.428113
 LONGITUDE = 9.179875
+
+OLLAMA_TAGS_URL = "http://127.0.0.1:11434/api/tags"
 
 stemmer = ItalianStemmer()
 
@@ -39,6 +43,46 @@ Regole:
 """
 
 
+def is_ollama_running():
+    try:
+        req = urllib.request.Request(
+            OLLAMA_TAGS_URL,
+            headers={"User-Agent": "VivoBot/1.0"}
+        )
+        with urllib.request.urlopen(req, timeout=2) as response:
+            return response.status == 200
+    except Exception:
+        return False
+
+
+def ensure_ollama_running():
+    if is_ollama_running():
+        print("Ollama già attivo")
+        return
+
+    print("Ollama non attivo, avvio ollama serve...")
+
+    popen_kwargs = {
+        "stdin": subprocess.DEVNULL,
+        "stdout": subprocess.DEVNULL,
+        "stderr": subprocess.DEVNULL,
+        "close_fds": True
+    }
+
+    if platform.system() == "Windows":
+        popen_kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
+
+    subprocess.Popen(["ollama", "serve"], **popen_kwargs)
+
+    for _ in range(20):
+        if is_ollama_running():
+            print("Ollama avviato correttamente")
+            return
+        time.sleep(1)
+
+    raise RuntimeError("Ollama non si è avviato sulla porta 11434")
+
+
 def normalize(text):
     text = text.lower()
     text = re.sub(r"[^a-zàèéìòùç0-9 ]", " ", text)
@@ -54,6 +98,10 @@ def ask_ollama(prompt):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
     )
+
+    if result.returncode != 0:
+        err = result.stderr.decode("utf-8", errors="ignore").strip()
+        return f"Errore nella generazione della risposta: {err or 'comando fallito'}"
 
     output = result.stdout.decode("utf-8", errors="ignore").strip()
 
@@ -129,7 +177,7 @@ def get_weather_data():
     temperature = current.get("temperature_2m")
     humidity = current.get("relative_humidity_2m")
     apparent = current.get("apparent_temperature")
-    time = current.get("time")
+    time_value = current.get("time")
 
     if temperature is None and humidity is None:
         return None
@@ -138,7 +186,7 @@ def get_weather_data():
         "temperature": temperature,
         "humidity": humidity,
         "apparent_temperature": apparent,
-        "time": time
+        "time": time_value
     }
 
 
@@ -255,4 +303,5 @@ async def main():
 
 
 if __name__ == "__main__":
+    ensure_ollama_running()
     asyncio.run(main())
