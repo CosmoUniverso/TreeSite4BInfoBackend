@@ -1,0 +1,8 @@
+
+
+" Ollama serve " su pws
+
+python client_pc.py
+
+ .venv\Scripts\Activate.ps1
+ venv\Scripts\activate
