@@ -246,31 +246,11 @@ def _call_llm(question: str, passages: list[tuple[str, str]], weather: str,
     return draft
 
 
-def _is_capabilities_question(question: str) -> bool:
-    """Riconosce le domande sulle funzioni realmente disponibili in Vivo."""
-    return bool(re.search(
-        r"\b(?:che\s+)?cosa\s+(?:sai|puoi)\s+fare\b"
-        r"|\b(?:quali|che)\s+(?:sono\s+)?(?:le\s+)?tue\s+(?:funzioni|capacità|abilit[aà])\b"
-        r"|\bcome\s+puoi\s+aiutarmi\b"
-        r"|\bdi\s+cosa\s+(?:sai|puoi)\s+parlare\b",
-        question,
-        flags=re.IGNORECASE,
-    ))
-
-
 def generate(question: str, budget_seconds: float = LOCAL_BUDGET) -> str:
-    # FAQ con dati verificabili, senza consumare token Bonsai.
+    # Sei FAQ con dati verificabili: nessun token Bonsai.
     faq_answer = answer_faq(question)
     if faq_answer is not None:
         return faq_answer
-    if _is_capabilities_question(question):
-        return (
-            "Posso raccontarti il progetto Vivo, spiegare le caratteristiche "
-            "del pioppo bianco e rispondere a domande di botanica usando le "
-            "fonti disponibili. Posso anche riferirti il meteo della zona, "
-            "quando il servizio è raggiungibile. Non posso misurare direttamente "
-            "la mia salute né inventare dati sulla mia crescita."
-        )
     passages = search_chunks(question)
     weather = ""
     if wants_weather(question):
