@@ -68,17 +68,32 @@ def main():
                 pages.extend((url, chunk) for chunk in chunks)
         except requests.RequestException as exc:
             print(f"Fonte saltata: {url}: {exc}")
-    notes = Path(__file__).with_name("knowledge_extra.md")
-    if notes.exists():
+    # Keep the old DB if all remote sources were unavailable. Extra notes alone
+    # are not sufficient evidence for a successful fresh crawl.
+    if not pages:
+        raise SystemExit("Nessuna pagina remota valida: database conservato")
+    # Project notes and separately sourced botany notes are searchable sources.
+    for name in ("knowledge_extra.md", "botanica_extra.md"):
+        notes = Path(__file__).with_name(name)
+        if not notes.exists():
+            continue
         text = notes.read_text(encoding="utf-8")
         paragraphs = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
         for paragraph in paragraphs:
-            if len(paragraph) > 750:
-                for start in range(0, len(paragraph), 750):
-                    pages.append((f"file:{notes.name}", paragraph[start:start+750]))
+            # Each sourced section is split on sentence boundaries where possible.
+            if len(paragraph) > 950:
+                parts = re.split(r"(?<=[.!?])\s+", paragraph)
+                buf = ""
+                for part in parts:
+                    if len(buf) + len(part) + 1 > 900 and buf:
+                        pages.append((f"file:{name}", buf))
+                        buf = ""
+                    buf = (buf + " " + part).strip()
+                if buf:
+                    pages.append((f"file:{name}", buf))
             else:
-                pages.append((f"file:{notes.name}", paragraph))
-        print(f"Note locali: {len(paragraphs)} sezioni")
+                pages.append((f"file:{name}", paragraph))
+        print(f"Note {name}: {len(paragraphs)} sezioni")
     if not pages:
         raise SystemExit("Nessuna fonte valida: database originale conservato")
 
