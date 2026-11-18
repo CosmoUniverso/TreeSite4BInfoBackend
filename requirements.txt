@@ -12,3 +12,7 @@ charset-normalizer==3.4.6
 idna==3.11
 urllib3==2.6.3
 soupsieve==2.8.3
+requests>=2.31,<3
+beautifulsoup4>=4.12,<5
+websockets>=13,<17
+nltk>=3.8,<4
