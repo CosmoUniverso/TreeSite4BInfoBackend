@@ -18,6 +18,7 @@ from functools import lru_cache
 from pathlib import Path
 
 import websockets
+from vivo_faq import answer_faq
 from nltk.stem.snowball import ItalianStemmer
 
 WS_URL = os.getenv("VIVO_RELAY_WS", "wss://treesite4binfo.onrender.com/ws/client")
@@ -258,6 +259,10 @@ def _is_capabilities_question(question: str) -> bool:
 
 
 def generate(question: str, budget_seconds: float = LOCAL_BUDGET) -> str:
+    # FAQ con dati verificabili, senza consumare token Bonsai.
+    faq_answer = answer_faq(question)
+    if faq_answer is not None:
+        return faq_answer
     if _is_capabilities_question(question):
         return (
             "Posso raccontarti il progetto Vivo, spiegare le caratteristiche "
